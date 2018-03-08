@@ -259,3 +259,12 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/gfx/3.bmp
+/gfx/2.bmp
+/gfx/1.bmp
+*.bmp
+/lbx/BACKGRND
+/lbx/portraits
+/gfx/0_TRLSHAMN_
+/UnitTests/0_TRLSHAMN_
+*.LBX

@@ -1,16 +1,16 @@
 ﻿using Tool.Core;
 using System;
-using System.Diagnostics;
-using System.IO;
+using System.Drawing;
 using System.Linq;
-using System.Reflection;
 
-namespace lbx
+namespace Tool.Gfx
 {
     class Program
     {
         static void Main(string[] args)
         {
+            Color c1 = Color.FromArgb(0xFF00FF);
+            Color c2 = Color.FromArgb(255, 0, 255);
             ICmdCommand command = CreateCommand(args);
             if (!command.ValidateArgs)
             {
@@ -31,12 +31,8 @@ namespace lbx
             string commandName = args[0];
             switch (commandName.ToLower())
             {
-                case "info":
-                    return new PrintArchiveInfo(commandArgs);
-                case "extract":
-                    return new ExtractArchive(commandArgs);
                 default:
-                    return new ExtractArchive(args);
+                    return new ConvertImage(args);
             }
         }
     }
