@@ -1,15 +1,11 @@
-﻿using Tool.Core;
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-
-namespace lbx
+﻿namespace Tool.Lbx
 {
-    class Program
+    using System.Linq;
+    using Tool.Core;
+
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             ICmdCommand command = CreateCommand(args);
             if (!command.ValidateArgs)
@@ -24,7 +20,9 @@ namespace lbx
         private static ICmdCommand CreateCommand(string[] args)
         {
             if (args.Length == 0)
+            {
                 return new PrintUsageInfo();
+            }
 
             string[] commandArgs = args.Skip(1).ToArray();
 

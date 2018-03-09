@@ -1,8 +1,8 @@
-﻿using System.IO;
-using System.Text;
-
-namespace lbx
+﻿namespace Tool.Lbx
 {
+    using System.IO;
+    using System.Text;
+
     public static class BinaryReaderExtensions
     {
         public static string ReadNullTerminatedFixedString(this BinaryReader me, int maxLength)
@@ -12,8 +12,14 @@ namespace lbx
             for (int i = 0; i < bytes.Length; i++)
             {
                 char c = (char)bytes[i];
-                if (c != '\0') sb.Append(c);
-                else break;
+                if (c != '\0')
+                {
+                    sb.Append(c);
+                }
+                else
+                {
+                    break;
+                }
             }
 
             return sb.ToString();

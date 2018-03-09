@@ -1,7 +1,7 @@
-﻿using Tool.Core;
-
-namespace Tool.Gfx
+﻿namespace Tool.Gfx
 {
+    using Tool.Core;
+
     internal class PrintUsageInfo : ICmdCommand
     {
         public bool ValidateArgs => throw new System.NotImplementedException();

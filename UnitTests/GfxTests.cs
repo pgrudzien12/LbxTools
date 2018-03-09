@@ -1,17 +1,14 @@
-﻿using Tool.Gfx;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-
-namespace UnitTests
+﻿namespace UnitTests
 {
+    using System.IO;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Tool.Gfx;
+
     [TestClass]
     public class GfxTests
     {
         [TestMethod]
-        public void template_1()
+        public void Template1()
         {
             var tbytes = File.ReadAllBytes("1_template.bmp");
             ConvertImage ci = new ConvertImage(new[] { "0_TRLSHAMN_" });
@@ -20,8 +17,9 @@ namespace UnitTests
             var bytes = File.ReadAllBytes("1.bmp");
             AssertEquality(tbytes, bytes);
         }
+
         [TestMethod]
-        public void template_2()
+        public void Template2()
         {
             var tbytes = File.ReadAllBytes("2_template.bmp");
             ConvertImage ci = new ConvertImage(new[] { "0_TRLSHAMN_" });

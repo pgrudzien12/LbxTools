@@ -1,7 +1,7 @@
-﻿using Tool.Core;
-
-namespace lbx
+﻿namespace Tool.Lbx
 {
+    using Tool.Core;
+
     internal class PrintUsageInfo : ICmdCommand
     {
         public bool ValidateArgs => true;

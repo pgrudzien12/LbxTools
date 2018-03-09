@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Text;
-using Tool.Core;
-
-namespace Tool.Gfx
+﻿namespace Tool.Gfx
 {
+    using ImageSharp;
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Text;
+    using Tool.Core;
+
     public class ConvertImage : ICmdCommand
     {
         private string[] args;
@@ -22,7 +21,7 @@ namespace Tool.Gfx
         public void Execute()
         {
             GfxHeader header;
-            string filename = args[0];
+            string filename = this.args[0];
             using (var reader = new BinaryReader(File.OpenRead(filename), Encoding.Default, false))
             {
                 header = reader.ByteToType<GfxHeader>();
@@ -32,10 +31,12 @@ namespace Tool.Gfx
                 {
                     offsets.Add(reader.ReadInt32());
                 }
-                GfxPaletteInfo paletteInfo = header.CreatePaletteInfo(reader);
-                IPalette Palette = CreatePalette(header, reader, paletteInfo);
 
-                using (Bitmap img = new Bitmap(header.Width, header.Height))
+                GfxPaletteInfo paletteInfo = header.CreatePaletteInfo(reader);
+                IPalette palette = CreatePalette(header, reader, paletteInfo);
+
+                using (Image <Rgba32> img = new Image<Rgba32>(header.Width, header.Height))
+                {
                     for (int i = 0; i < header.BitmapCount; i++)
                     {
                         var bmpStart = offsets[i];
@@ -45,7 +46,9 @@ namespace Tool.Gfx
                         byte[] imgBytes = reader.ReadBytes(length);
 
                         if (i == 0 && imgBytes[0] == 1)
-                            ResetImage(header, img, Color.FromArgb(255, 0, 255));
+                        {
+                            ResetImage(header, img, new Rgba32(255, 0, 255));
+                        }
 
                         int x = 0;
                         int bitmapIndex = 1;
@@ -54,10 +57,10 @@ namespace Tool.Gfx
                         int long_data = 0;
                         int n_r = 0;
                         int last_pos = 0;
-                        int RLE_val;
-                        int RleLength;
-                        int RleCounter;
-                        Color ColourValue;
+                        int rle_val;
+                        int rleLength;
+                        int rleCounter;
+                        Rgba32 colourCalue;
                         while (x < header.Width && bitmapIndex < length)
                         {
                             y = 0;
@@ -65,8 +68,8 @@ namespace Tool.Gfx
                             {
                                 bitmapIndex++;
 
-                                //{ Values of at least this indicate run length values }
-                                RLE_val = paletteInfo.FirstPaletteColourIndex + paletteInfo.PaletteColourCount;
+                                // { Values of at least this indicate run length values }
+                                rle_val = paletteInfo.FirstPaletteColourIndex + paletteInfo.PaletteColourCount;
                             }
                             else
                             {
@@ -76,11 +79,11 @@ namespace Tool.Gfx
                                 switch (imgBytes[bitmapIndex])
                                 {
                                     case 0x0:
-                                        RLE_val = paletteInfo.FirstPaletteColourIndex +
+                                        rle_val = paletteInfo.FirstPaletteColourIndex +
                                              paletteInfo.PaletteColourCount;
                                         break;
                                     case 0x80:
-                                        RLE_val = 0xE0;
+                                        rle_val = 0xE0;
                                         break;
                                     default:
                                         throw new Exception("Unrecognized RLE value");
@@ -94,33 +97,41 @@ namespace Tool.Gfx
                                 {
                                     while ((n_r < bitmapIndex + long_data) && (x < header.Width))
                                     {
-                                        if (imgBytes[n_r] >= RLE_val)
+                                        if (imgBytes[n_r] >= rle_val)
                                         {
                                             last_pos = n_r + 1;
-                                            RleLength = imgBytes[n_r] - RLE_val + 1;
+                                            rleLength = imgBytes[n_r] - rle_val + 1;
                                             {
-                                                if (RleLength + y > header.Height)
+                                                if (rleLength + y > header.Height)
+                                                {
                                                     throw new Exception("RLE length overrun on y");
+                                                }
                                             }
 
-                                            RleCounter = 0;
-                                            while ((RleCounter < RleLength) && (y < header.Height))
+                                            rleCounter = 0;
+                                            while ((rleCounter < rleLength) && (y < header.Height))
                                             {
-                                                if ((x < header.Width) && (y < header.Height) &&
-                                                  (x >= 0) && (y >= 0))
+                                                if ((x < header.Width) && (y < header.Height) && (x >= 0) && (y >= 0))
                                                 {
-                                                    ColourValue = Palette[imgBytes[last_pos]];
-                                                    if (ColourValue == Color.FromArgb(0xB4A0A0))
-                                                        img.SetPixel(x, y, Color.FromArgb(0x00FF00));
+                                                    colourCalue = palette[imgBytes[last_pos]];
+                                                    if (colourCalue == new Rgba32(0xFFB4A0A0))
+                                                    {
+                                                        img.GetPixelReference(x, y) = new Rgba32(0xFF00FF00);
+                                                    }
                                                     else
-                                                        img.SetPixel(x, y, ColourValue);
+                                                    {
+                                                        img.GetPixelReference(x, y) = colourCalue;
+                                                    }
                                                 }
                                                 else
+                                                {
                                                     throw new Exception("RLE length overrun on output");
+                                                }
 
                                                 y++;
-                                                RleCounter++;
+                                                rleCounter++;
                                             }
+
                                             n_r += 2;
                                         }
                                         else
@@ -129,13 +140,16 @@ namespace Tool.Gfx
                                             if ((x < header.Width) && (y < header.Height) &&
                                               (x >= 0) && (y >= 0))
                                             {
-                                                ColourValue = Palette[imgBytes[n_r]];
-                                                if (ColourValue == Color.FromArgb(0xB4A0A0))
-                                                    img.SetPixel(x, y, Color.FromArgb(0x00FF00));
+                                                colourCalue = palette[imgBytes[n_r]];
+                                                if (colourCalue == new Rgba32(0xFFB4A0A0))
+                                                {
+                                                    img.GetPixelReference(x, y) = new Rgba32(0xFF00FF00);
+                                                }
                                                 else
-                                                    img.SetPixel(x, y, ColourValue);
+                                                {
+                                                    img.GetPixelReference(x, y) = colourCalue;
+                                                }
                                             }
-
 
                                             n_r++;
                                             y++;
@@ -144,82 +158,74 @@ namespace Tool.Gfx
 
                                     if (n_r < next_ctl)
                                     {
-                                        //{
-                                        //    On se trouve sur un autre RLE sur la ligne
-                                        //                                      Some others data are here }
+                                        // Some others data are here
                                         y += imgBytes[n_r + 1];
-                                        //{ next pos Y to write pixels }
+
+                                        // next pos Y to write pixels
                                         bitmapIndex = n_r + 2;
                                         long_data = imgBytes[n_r];
-                                        //{ number of data to put }
-                                        n_r += 2;
 
-                                        //{
-                                        //    if n_r >= next_ctl then
-                                        //                                       throw new Exception('More RLE but lines too short');
-                                        //}
+                                        // number of data to put
+                                        n_r += 2;
                                     }
                                 }
 
-                                bitmapIndex = next_ctl; // { jump to next line }
+                                bitmapIndex = next_ctl; // jump to next line
                             }
 
                             x++;
                         }
-                        img.Save($"{i}.bmp", ImageFormat.Bmp);
-                        // save the bitmap!
 
+                        img.Save($"{i}.bmp");
                     }
-            }
-
-        }
-
-        private static IPalette CreatePalette(GfxHeader header, BinaryReader reader, GfxPaletteInfo paletteInfo)
-        {
-            IPalette Palette;
-
-            if (header.PaletteInfoOffset > 0)
-            {
-                //{ Read palette }
-                Palette = ReadPalette(reader, paletteInfo);
-            }
-            else
-            {
-                Palette = new DefaultPalette();
-            }
-
-            return Palette;
-        }
-
-        private static IPalette ReadPalette(BinaryReader reader, GfxPaletteInfo paletteInfo)
-        {
-            IPalette Palette = new DefaultPalette();
-            reader.BaseStream.Seek(paletteInfo.PaletteOffset, SeekOrigin.Begin);
-            for (var ColourNo = 0; ColourNo < paletteInfo.PaletteColourCount; ColourNo++)
-            {
-
-                var paletteEntry = reader.ByteToType<GfxPaletteEntry>();
-
-                paletteEntry.MultiplyBy(4);
-                Palette[paletteInfo.FirstPaletteColourIndex + ColourNo] = paletteEntry.ToColor();
-            }
-
-            return Palette;
-        }
-
-        private static void ResetImage(GfxHeader header, Bitmap img, Color c)
-        {
-            for (int x = 0; x < header.Width; x++)
-            {
-                for (int y = 0; y < header.Height; y++)
-                {
-                    img.SetPixel(x, y, c);
                 }
             }
         }
 
         public void PrintUsage()
         {
+        }
+
+        private static IPalette CreatePalette(GfxHeader header, BinaryReader reader, GfxPaletteInfo paletteInfo)
+        {
+            IPalette palette;
+
+            if (header.PaletteInfoOffset > 0)
+            {
+                palette = ReadPalette(reader, paletteInfo);
+            }
+            else
+            {
+                palette = new DefaultPalette();
+            }
+
+            return palette;
+        }
+
+        private static IPalette ReadPalette(BinaryReader reader, GfxPaletteInfo paletteInfo)
+        {
+            IPalette palette = new DefaultPalette();
+            reader.BaseStream.Seek(paletteInfo.PaletteOffset, SeekOrigin.Begin);
+            for (var i = 0; i < paletteInfo.PaletteColourCount; i++)
+            {
+                var paletteEntry = reader.ByteToType<GfxPaletteEntry>();
+
+                paletteEntry.MultiplyBy(4);
+                palette[paletteInfo.FirstPaletteColourIndex + i] = paletteEntry.ToColor();
+            }
+
+            return palette;
+        }
+
+        private static void ResetImage(GfxHeader header, Image<Rgba32> img, Rgba32 c)
+        {
+            for (int x = 0; x < header.Width; x++)
+            {
+                for (int y = 0; y < header.Height; y++)
+                {
+                    img.GetPixelReference(x, y) = c;
+                }
+            }
         }
     }
 }

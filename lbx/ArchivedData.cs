@@ -1,15 +1,13 @@
-﻿using System;
-using System.IO;
-using System.Text;
-
-namespace lbx
+﻿namespace Tool.Lbx
 {
+    using System.IO;
+
     internal class ArchivedData
     {
         public ArchivedData(MemoryStream stream, int length)
         {
-            Bytes = new byte[length];
-            stream.Read(Bytes, 0, length);
+            this.Bytes = new byte[length];
+            stream.Read(this.Bytes, 0, length);
         }
 
         public byte[] Bytes { get; }

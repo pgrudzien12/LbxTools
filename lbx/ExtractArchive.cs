@@ -1,9 +1,8 @@
-﻿using System;
-using System.IO;
-using Tool.Core;
-
-namespace lbx
+﻿namespace Tool.Lbx
 {
+    using System.IO;
+    using Tool.Core;
+
     internal class ExtractArchive : ICmdCommand
     {
         private string[] commandArgs;
@@ -13,21 +12,26 @@ namespace lbx
             this.commandArgs = commandArgs;
         }
 
-        public bool ValidateArgs => commandArgs.Length >= 1;
+        public bool ValidateArgs => this.commandArgs.Length >= 1;
 
         public void Execute()
         {
-            var info = LbxInfo.Load(commandArgs[0]);
+            var info = LbxInfo.Load(this.commandArgs[0]);
             for (int i = 0; i < info.FileCount; i++)
             {
                 var ci = info.ContentInfo[i];
 
-                var dir = GetDirName(ci);
-                EnsureDirExistance(dir);
+                var dir = this.GetDirName(ci);
+                this.EnsureDirExistance(dir);
                 string path = CreatePath(dir, i, ci);
 
                 ci.WriteData(path);
             }
+        }
+
+        public void PrintUsage()
+        {
+            throw new System.NotImplementedException();
         }
 
         private static string CreatePath(string dir, int i, ArchiveContent ci)
@@ -39,28 +43,30 @@ namespace lbx
 
         private static string Santizie(string dirty)
         {
-            return String.Concat(dirty.Split(Path.GetInvalidFileNameChars()));
+            return string.Concat(dirty.Split(Path.GetInvalidFileNameChars()));
         }
 
         private string GetDirName(ArchiveContent ci)
         {
             string dir;
-            if (commandArgs.Length == 2)
-                dir = commandArgs[1];
+            if (this.commandArgs.Length == 2)
+            {
+                dir = this.commandArgs[1];
+            }
             else
-                dir = Path.GetFileNameWithoutExtension(commandArgs[0]);
+            {
+                dir = Path.GetFileNameWithoutExtension(this.commandArgs[0]);
+            }
+
             return dir;
         }
 
         private void EnsureDirExistance(string dir)
         {
             if (!Directory.Exists(dir))
+            {
                 Directory.CreateDirectory(dir);
-        }
-
-        public void PrintUsage()
-        {
-            throw new System.NotImplementedException();
+            }
         }
     }
 }

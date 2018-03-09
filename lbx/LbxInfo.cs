@@ -1,18 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-
-namespace lbx
+﻿namespace Tool.Lbx
 {
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Text;
+
     internal class LbxInfo
     {
         public ushort FileCount { get; private set; }
+
         public byte[] MagicString { get; private set; }
+
         public ushort UnusedValue { get; private set; }
+
         public List<ArchiveContent> ContentInfo { get; } = new List<ArchiveContent>();
 
         public uint EndOffset { get; private set; }
+
         internal static LbxInfo Load(string filename)
         {
             using (var stream = new MemoryStream(File.ReadAllBytes(filename)))
@@ -20,6 +23,7 @@ namespace lbx
                 return LbxInfo.Read(stream);
             }
         }
+
         internal static LbxInfo Read(MemoryStream stream)
         {
             var result = new LbxInfo();
@@ -35,8 +39,8 @@ namespace lbx
                 for (int i = 0; i < result.FileCount; i++)
                 {
                     var contentLength = (int)(offsets[i + 1] - offsets[i]);
-                    var recordStartOffset = fileNamesStartOffset + i * 32;
-                    var recordEndOffset = fileNamesStartOffset + (i + 1) * 32;
+                    var recordStartOffset = fileNamesStartOffset + (i * 32);
+                    var recordEndOffset = fileNamesStartOffset + ((i + 1) * 32);
                     string fName, fDesc;
 
                     stream.Seek(recordStartOffset, SeekOrigin.Begin);
@@ -58,6 +62,7 @@ namespace lbx
                     result.ContentInfo.Add(new ArchiveContent(offsets[i], fName, fDesc, bytes));
                 }
             }
+
             return result;
         }
 
@@ -68,6 +73,7 @@ namespace lbx
             {
                 offsets.Add(reader.ReadUInt32());
             }
+
             result.EndOffset = reader.ReadUInt32();
             offsets.Add(result.EndOffset);
             return offsets;

@@ -1,13 +1,12 @@
-﻿using Tool.Core;
-using System;
-using System.Drawing;
-using System.Linq;
-
-namespace Tool.Gfx
+﻿namespace Tool.Gfx
 {
-    class Program
+    using System.Drawing;
+    using System.Linq;
+    using Tool.Core;
+
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Color c1 = Color.FromArgb(0xFF00FF);
             Color c2 = Color.FromArgb(255, 0, 255);
@@ -24,7 +23,9 @@ namespace Tool.Gfx
         private static ICmdCommand CreateCommand(string[] args)
         {
             if (args.Length == 0)
+            {
                 return new PrintUsageInfo();
+            }
 
             string[] commandArgs = args.Skip(1).ToArray();
 
