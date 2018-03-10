@@ -1,9 +1,17 @@
-﻿using ImageSharp;
+﻿using System;
+using System.IO;
+using ImageSharp;
+using Tool.Core;
 
 namespace Tool.Gfx
 {
-    internal class DefaultPalette : IPalette
+    internal class Painter
     {
+        public Painter(Image<Rgba32> img)
+        {
+            Img = img;
+        }
+
         private uint[][] palette =
             { new uint[] { 0x0,  0x0,  0x0 },
             new uint[] { 0x8,  0x4,  0x4 },
@@ -263,6 +271,33 @@ namespace Tool.Gfx
             new uint[] { 0x0, 0x0, 0x0 },
         };
 
+        internal void ReadPalette(BinaryReader reader, GfxPaletteInfo paletteInfo)
+        {
+            reader.BaseStream.Seek(paletteInfo.PaletteOffset, SeekOrigin.Begin);
+            for (var i = 0; i < paletteInfo.PaletteColourCount; i++)
+            {
+                var paletteEntry = reader.ByteToType<GfxPaletteEntry>();
+
+                paletteEntry.MultiplyBy(4);
+                this[paletteInfo.FirstPaletteColourIndex + i] = paletteEntry.ToColor();
+            }
+        }
+
+        public void ResetImage()
+        {
+            Rgba32 resetColor = new Rgba32(255, 0, 255);
+            for (int x = 0; x < Img.Width; x++)
+            {
+                for (int y = 0; y < Img.Height; y++)
+                {
+                    Img.GetPixelReference(x, y) = resetColor;
+                }
+            }
+        }
+
+        public int DefaultRleVal { get; set; }
+        public Image<Rgba32> Img { get; }
+
         public Rgba32 this[int i]
         {
             get => new Rgba32((byte)this.palette[i][0], (byte)this.palette[i][1], (byte)this.palette[i][2]);
@@ -271,6 +306,22 @@ namespace Tool.Gfx
                 this.palette[i][0] = value.R;
                 this.palette[i][1] = value.G;
                 this.palette[i][2] = value.B;
+            }
+        }
+
+        public byte this[int x, int y]
+        {
+            set
+            {
+                Rgba32 colourCalue = this[value];
+                if (colourCalue == new Rgba32(0xFFB4A0A0))
+                {
+                    Img.GetPixelReference(x, y) = new Rgba32(0xFF00FF00);
+                }
+                else
+                {
+                    Img.GetPixelReference(x, y) = colourCalue;
+                }
             }
         }
     }
