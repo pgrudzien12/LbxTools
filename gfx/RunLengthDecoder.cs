@@ -10,8 +10,19 @@
     public class RunLengthDecoder
     {
         private const int SkipMarker = 0xff;
-        public static IEnumerable<Image<Rgba32>> ConvertToBmps(FileStream stream)
+
+        public static IEnumerable<Image<Rgba32>> ConvertToBmps(Stream stream)
         {
+            if (stream == null)
+            {
+                throw new ArgumentNullException(nameof(stream));
+            }
+
+            if (!stream.CanRead || stream.CanSeek)
+            {
+                throw new ArgumentException($"Argument '{nameof(stream)}' must support reading and seeking");
+            }
+
             using (var reader = new BinaryReader(stream, Encoding.Default, false))
             {
                 GfxHeader header = reader.ByteToType<GfxHeader>();
